@@ -68,6 +68,75 @@ impl Color {
             Color::TrueColor { r, g, b } => format!("48;2;{};{};{}", r, g, b).into(),
         }
     }
+
+    /// Gets the closest plain color to the TrueColor
+    fn closest_color_euclidean(&self) -> Self {
+        use Color::*;
+        use std::cmp;
+
+        match *self {
+            TrueColor { r: r1, g: g1, b: b1 } => {
+                let colors = vec![
+                    Black,
+                    Red,
+                    Green,
+                    Yellow,
+                    Blue,
+                    Magenta,
+                    Cyan,
+                    White,
+                    BrightBlack,
+                    BrightRed,
+                    BrightGreen,
+                    BrightYellow,
+                    BrightBlue,
+                    BrightMagenta,
+                    BrightCyan,
+                    BrightWhite,
+                ].into_iter().map(|c| (c, c.into_truecolor()));
+                let distances = colors.map(|(c_original, c)| {
+                    if let TrueColor { r, g, b } = c {
+                        let rd = cmp::max(r, r1) - cmp::min(r, r1);
+                        let gd = cmp::max(g, g1) - cmp::min(g, g1);
+                        let bd = cmp::max(b, b1) - cmp::min(b, b1);
+                        let rd: u32 = rd.into();
+                        let gd: u32 = gd.into();
+                        let bd: u32 = bd.into();
+                        let distance = rd.pow(2) + gd.pow(2) + bd.pow(2);
+                        (c_original, distance)
+                    } else {
+                        unimplemented!("{:?} not a TrueColor", c)
+                    }
+                });
+                distances.min_by(|(_, d1), (_, d2)| d1.cmp(d2)).unwrap().0
+            }
+            c => c,
+        }
+
+    }
+
+    fn into_truecolor(self) -> Self {
+        use Color::*;
+        match self {
+            Black => TrueColor         { r: 0,   g: 0,   b: 0   },
+            Red => TrueColor           { r: 205, g: 0,   b: 0   },
+            Green => TrueColor         { r: 0,   g: 205, b: 0   },
+            Yellow => TrueColor        { r: 205, g: 205, b: 0   },
+            Blue => TrueColor          { r: 0,   g: 0,   b: 238 },
+            Magenta => TrueColor       { r: 205, g: 0,   b: 205 },
+            Cyan => TrueColor          { r: 0,   g: 205, b: 205 },
+            White => TrueColor         { r: 229, g: 229, b: 229 },
+            BrightBlack => TrueColor   { r: 127, g: 127, b: 127 },
+            BrightRed => TrueColor     { r: 255, g: 0,   b: 0   },
+            BrightGreen => TrueColor   { r: 0,   g: 255, b: 0   },
+            BrightYellow => TrueColor  { r: 255, g: 255, b: 0   },
+            BrightBlue => TrueColor    { r: 92,  g: 92,  b: 255 },
+            BrightMagenta => TrueColor { r: 255, g: 0,   b: 255 },
+            BrightCyan => TrueColor    { r: 0,   g: 255, b: 255 },
+            BrightWhite => TrueColor   { r: 255, g: 255, b: 255 },
+            TrueColor { r, g, b } => TrueColor { r, g, b },
+        }
+    }
 }
 
 impl<'a> From<&'a str> for Color {
