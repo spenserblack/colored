@@ -1,4 +1,4 @@
-use std::{borrow::Cow, str::FromStr};
+use std::{borrow::Cow, env, str::FromStr};
 
 /// The 8 standard colors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -23,6 +23,15 @@ pub enum Color {
     TrueColor { r: u8, g: u8, b: u8 },
 }
 
+fn truecolor_support() -> bool {
+    let truecolor = env::var("COLORTERM");
+    if let Ok(truecolor) = truecolor {
+        truecolor == "truecolor" || truecolor == "24bit"
+    } else {
+        false
+    }
+}
+
 #[allow(missing_docs)]
 impl Color {
     pub fn to_fg_str(&self) -> Cow<'static, str> {
@@ -43,6 +52,7 @@ impl Color {
             Color::BrightMagenta => "95".into(),
             Color::BrightCyan => "96".into(),
             Color::BrightWhite => "97".into(),
+            Color::TrueColor {..} if !truecolor_support() => self.closest_color_euclidean().to_fg_str(),
             Color::TrueColor { r, g, b } => format!("38;2;{};{};{}", r, g, b).into(),
         }
     }
@@ -65,6 +75,7 @@ impl Color {
             Color::BrightMagenta => "105".into(),
             Color::BrightCyan => "106".into(),
             Color::BrightWhite => "107".into(),
+            Color::TrueColor {..} if !truecolor_support() => self.closest_color_euclidean().to_bg_str(),
             Color::TrueColor { r, g, b } => format!("48;2;{};{};{}", r, g, b).into(),
         }
     }
