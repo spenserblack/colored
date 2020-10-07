@@ -212,4 +212,37 @@ mod tests {
             assert_eq!(Err(()), color)
         }
     }
+
+    mod closest_euclidean {
+        use super::*;
+
+        macro_rules! make_euclidean_distance_test {
+            ( $test:ident : ( $r:literal, $g: literal, $b:literal ), $expected:expr ) => {
+                #[test]
+                fn $test() {
+                    let true_color = Color::TrueColor { r: $r, g: $g, b: $b };
+                    let actual = true_color.closest_color_euclidean();
+                    assert_eq!(actual, $expected);
+                }
+            }
+        }
+
+        make_euclidean_distance_test! { exact_black: (0, 0, 0), Color::Black }
+        make_euclidean_distance_test! { exact_red: (205, 0, 0), Color::Red }
+        make_euclidean_distance_test! { exact_green: (0, 205, 0), Color::Green }
+        make_euclidean_distance_test! { exact_yellow: (205, 205, 0), Color::Yellow }
+        make_euclidean_distance_test! { exact_blue: (0, 0, 238), Color::Blue }
+        make_euclidean_distance_test! { exact_magenta: (205, 0, 205), Color::Magenta }
+        make_euclidean_distance_test! { exact_cyan: (0, 205, 205), Color::Cyan }
+        make_euclidean_distance_test! { exact_white: (229, 229, 229), Color::White }
+
+        make_euclidean_distance_test! { almost_black: (10, 15, 10), Color::Black }
+        make_euclidean_distance_test! { almost_red: (215, 10, 10), Color::Red }
+        make_euclidean_distance_test! { almost_green: (10, 195, 10), Color::Green }
+        make_euclidean_distance_test! { almost_yellow: (195, 215, 10), Color::Yellow }
+        make_euclidean_distance_test! { almost_blue: (0, 0, 200), Color::Blue }
+        make_euclidean_distance_test! { almost_magenta: (215, 0, 195), Color::Magenta }
+        make_euclidean_distance_test! { almost_cyan: (10, 215, 215), Color::Cyan }
+        make_euclidean_distance_test! { almost_white: (209, 209, 229), Color::White }
+    }
 }
