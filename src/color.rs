@@ -89,8 +89,9 @@ impl FromStr for Color {
         let src = src.to_lowercase();
 
         #[cfg(feature = "parse_truecolor")]
-        lazy_static!{
-            static ref RE: regex::Regex = regex::Regex::new("^#?([A-Za-z0-9]{2})([A-Za-z0-9]{2})([A-Za-z0-9]{2})$").unwrap();
+        lazy_static! {
+            static ref RE: regex::Regex =
+                regex::Regex::new("^#?([A-Za-z0-9]{2})([A-Za-z0-9]{2})([A-Za-z0-9]{2})$").unwrap();
         }
 
         match src.as_ref() {
@@ -114,11 +115,11 @@ impl FromStr for Color {
             #[cfg(feature = "parse_truecolor")]
             str if RE.is_match(&src) => {
                 let caps = RE.captures(&str).unwrap();
-                Ok(Color::TrueColor { 
+                Ok(Color::TrueColor {
                     r: u8::from_str_radix(&caps[1], 16).unwrap(),
                     g: u8::from_str_radix(&caps[2], 16).unwrap(),
                     b: u8::from_str_radix(&caps[3], 16).unwrap(),
-                 })
+                })
             }
             _ => Err(()),
         }
