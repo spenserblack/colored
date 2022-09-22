@@ -168,6 +168,12 @@ impl FromStr for Color {
     fn from_str(src: &str) -> Result<Self, Self::Err> {
         let src = src.to_lowercase();
 
+        #[cfg(feature = "parse_truecolor")]
+        lazy_static! {
+            static ref RE: regex::Regex =
+                regex::Regex::new("^#?([A-Za-z0-9]{2})([A-Za-z0-9]{2})([A-Za-z0-9]{2})$").unwrap();
+        }
+
         match src.as_ref() {
             "black" => Ok(Color::Black),
             "red" => Ok(Color::Red),
@@ -186,6 +192,15 @@ impl FromStr for Color {
             "bright magenta" => Ok(Color::BrightMagenta),
             "bright cyan" => Ok(Color::BrightCyan),
             "bright white" => Ok(Color::BrightWhite),
+            #[cfg(feature = "parse_truecolor")]
+            str if RE.is_match(&src) => {
+                let caps = RE.captures(&str).unwrap();
+                Ok(Color::TrueColor {
+                    r: u8::from_str_radix(&caps[1], 16).unwrap(),
+                    g: u8::from_str_radix(&caps[2], 16).unwrap(),
+                    b: u8::from_str_radix(&caps[3], 16).unwrap(),
+                })
+            }
             _ => Err(()),
         }
     }
@@ -211,6 +226,7 @@ mod tests {
             }
         }
 
+        #[cfg(not(feature = "parse_truecolor"))]
         make_test!(
             black: "black" => Color::Black,
             red: "red" => Color::Red,
@@ -234,6 +250,33 @@ mod tests {
             capitalized: "BLUE" => Color::Blue,
             mixed_case: "bLuE" => Color::Blue
         );
+
+        #[cfg(feature = "parse_truecolor")]
+        make_test!(
+            black: "black" => Color::Black,
+            red: "red" => Color::Red,
+            green: "green" => Color::Green,
+            yellow: "yellow" => Color::Yellow,
+            blue: "blue" => Color::Blue,
+            magenta: "magenta" => Color::Magenta,
+            purple: "purple" => Color::Magenta,
+            cyan: "cyan" => Color::Cyan,
+            white: "white" => Color::White,
+            brightblack: "bright black" => Color::BrightBlack,
+            brightred: "bright red" => Color::BrightRed,
+            brightgreen: "bright green" => Color::BrightGreen,
+            brightyellow: "bright yellow" => Color::BrightYellow,
+            brightblue: "bright blue" => Color::BrightBlue,
+            brightmagenta: "bright magenta" => Color::BrightMagenta,
+            brightcyan: "bright cyan" => Color::BrightCyan,
+            brightwhite: "bright white" => Color::BrightWhite,
+
+            invalid: "invalid" => Color::White,
+            capitalized: "BLUE" => Color::Blue,
+            mixed_case: "bLuE" => Color::Blue,
+            tc_black: "#000000" => Color::TrueColor{ r: 0, g: 0, b: 0 },
+            tc_blueish: "336699" => Color::TrueColor{ r: 51, g: 102, b: 153 }
+        );
     }
 
     mod from_string {
@@ -253,6 +296,7 @@ mod tests {
             }
         }
 
+        #[cfg(not(feature = "parse_truecolor"))]
         make_test!(
             black: "black" => Color::Black,
             red: "red" => Color::Red,
@@ -274,6 +318,33 @@ mod tests {
             invalid: "invalid" => Color::White,
             capitalized: "BLUE" => Color::Blue,
             mixed_case: "bLuE" => Color::Blue
+        );
+
+        #[cfg(feature = "parse_truecolor")]
+        make_test!(
+            black: "black" => Color::Black,
+            red: "red" => Color::Red,
+            green: "green" => Color::Green,
+            yellow: "yellow" => Color::Yellow,
+            blue: "blue" => Color::Blue,
+            magenta: "magenta" => Color::Magenta,
+            purple: "purple" => Color::Magenta,
+            cyan: "cyan" => Color::Cyan,
+            white: "white" => Color::White,
+            brightblack: "bright black" => Color::BrightBlack,
+            brightred: "bright red" => Color::BrightRed,
+            brightgreen: "bright green" => Color::BrightGreen,
+            brightyellow: "bright yellow" => Color::BrightYellow,
+            brightblue: "bright blue" => Color::BrightBlue,
+            brightmagenta: "bright magenta" => Color::BrightMagenta,
+            brightcyan: "bright cyan" => Color::BrightCyan,
+            brightwhite: "bright white" => Color::BrightWhite,
+
+            invalid: "invalid" => Color::White,
+            capitalized: "BLUE" => Color::Blue,
+            mixed_case: "bLuE" => Color::Blue,
+            tc_black: "#000000" => Color::TrueColor{ r: 0, g: 0, b: 0 },
+            tc_blueish: "336699" => Color::TrueColor{ r: 51, g: 102, b: 153 }
         );
     }
 
