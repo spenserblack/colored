@@ -126,25 +126,6 @@ dumb_terminal = ["colored/no-color"]
 You can use have even finer control by using the
 `colored::control::set_override` method.
 
-## Build with Docker
-
-### Install Docker
-
-Use the install instructions located [here](https://docs.docker.com/v17.12/install/)
-
-### Build the Docker image
-
-```docker build -t colored_image .```
-
-### Build the library
-
-```docker run --rm -it -v "$PWD":/src -u `id -u`:`id -g` colored_image /bin/bash -c "cargo build"```
-
-### Test the library
-
-```docker run --rm -it -v "$PWD":/src -u `id -u`:`id -g` colored_image /bin/bash -c "cargo test"```
-
-
 ## Todo
 
 - **More tests ?**: We always welcome more tests! Please contribute!
