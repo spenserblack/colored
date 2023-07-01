@@ -1,7 +1,6 @@
 # Colored
 
-[![Build
-Status](https://travis-ci.org/mackwic/colored.svg?branch=master)](https://travis-ci.org/mackwic/colored) [![Crates.io](https://img.shields.io/crates/v/colored.svg?maxAge=2592000)](https://crates.io/crates/colored) [![Crates.io](https://img.shields.io/crates/l/colored.svg?maxAge=2592000)](https://github.com/mackwic/colored/blob/master/LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/colored.svg?maxAge=2592000)](https://crates.io/crates/colored) [![Crates.io](https://img.shields.io/crates/l/colored.svg?maxAge=2592000)](https://github.com/mackwic/colored/blob/master/LICENSE)
 
 Coloring terminal so simple, you already know how to do it!
 
