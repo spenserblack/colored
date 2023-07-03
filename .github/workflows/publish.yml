@@ -31,7 +31,7 @@ jobs:
         uses: taiki-e/install-action@parse-changelog
       - name: Create GitHub release
         if: steps.needs-update.outputs.UPDATE == 'true'
-        run: gh release create "v${{ steps.local-version.outputs.VERSION }}" -n "$(parse-changelog CHANGELOG.md "${{ steps.local-version.outputs.VERSION }}")"
+        run: gh release create "v${{ steps.local-version.outputs.VERSION }}" -t "v${{ steps.local-version.outputs.VERSION }}" -n "$(parse-changelog CHANGELOG.md "${{ steps.local-version.outputs.VERSION }}")"
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       - name: Publish to crates.io
