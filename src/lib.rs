@@ -492,7 +492,7 @@ impl ColoredString {
 
     #[cfg(not(feature = "no-color"))]
     fn has_colors() -> bool {
-        control::SHOULD_COLORIZE.should_colorize()
+        control::get_current_color_level() != control::ColorLevel::None
     }
 
     #[cfg(feature = "no-color")]
