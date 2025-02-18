@@ -94,13 +94,43 @@ impl Color {
             Self::BrightMagenta => "105".into(),
             Self::BrightCyan => "106".into(),
             Self::BrightWhite => "107".into(),
-            Self::Ansi256 { idx } => format!("48;5;{}", idx).into(),
-
+            Self::Ansi256 { idx } => match get_current_color_level() {
+                ColorLevel::Ansi16 => self.ansi256_fallback_to_ansi16().to_bg_str(),
+                ColorLevel::Ansi256 | ColorLevel::TrueColor | ColorLevel::None => {
+                    format!("48;5;{}", idx).into()
+                }
+            },
             Self::TrueColor { r, g, b } => match get_current_color_level() {
                 ColorLevel::Ansi16 => self.truecolor_fallback_to_ansi16().to_bg_str(),
                 ColorLevel::Ansi256 => self.truecolor_fallback_to_ansi256().to_bg_str(),
                 ColorLevel::TrueColor | ColorLevel::None => format!("48;2;{r};{g};{b}").into(),
             },
+        }
+    }
+
+    /// Converts an ANSI 256-color to the closest ANSI 16-color palette color.
+    pub fn ansi256_fallback_to_ansi16(self) -> Self {
+        match self {
+            Color::Ansi256 { idx } => {
+                let (r, g, b) = ansi256_to_rgb(idx);
+                let mut min_distance_sq = u32::MAX;
+                let mut closest_color = self;
+
+                for &(cr, cg, cb, color) in ANSI_16_COLORS.iter() {
+                    let dr = (r as i32 - cr as i32).pow(2);
+                    let dg = (g as i32 - cg as i32).pow(2);
+                    let db = (b as i32 - cb as i32).pow(2);
+                    let distance_sq = (dr + dg + db) as u32;
+
+                    if distance_sq < min_distance_sq {
+                        min_distance_sq = distance_sq;
+                        closest_color = color;
+                    }
+                }
+
+                closest_color
+            }
+            _ => self,
         }
     }
 

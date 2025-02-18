@@ -249,6 +249,12 @@ pub trait Colorize {
     {
         self.color(Color::BrightWhite)
     }
+    fn ansi256color(self, idx: u8) -> ColoredString
+    where
+        Self: Sized,
+    {
+        self.color(Color::Ansi256 { idx })
+    }
     fn truecolor(self, r: u8, g: u8, b: u8) -> ColoredString
     where
         Self: Sized,
@@ -377,6 +383,12 @@ pub trait Colorize {
         Self: Sized,
     {
         self.on_color(Color::BrightWhite)
+    }
+    fn on_ansi256color(self, idx: u8) -> ColoredString
+    where
+        Self: Sized,
+    {
+        self.on_color(Color::Ansi256 { idx })
     }
     fn on_truecolor(self, r: u8, g: u8, b: u8) -> ColoredString
     where
