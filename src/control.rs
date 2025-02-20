@@ -90,7 +90,7 @@ pub(crate) fn get_current_color_level() -> ColorLevel {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 /// The color level to use for the terminal.
 /// Determines the color depth to use for the terminal.
 pub enum ColorLevel {
@@ -107,18 +107,18 @@ pub enum ColorLevel {
 impl ColorLevel {
     fn detect() -> Self {
         // Check for 24-bit color support via COLORTERM
-        if env::var("COLORTERM").map_or(false, |v| matches!(v.as_str(), "truecolor" | "24bit")) {
-            return ColorLevel::TrueColor;
+        if env::var("COLORTERM").is_ok_and(|v| matches!(v.as_str(), "truecolor" | "24bit")) {
+            return Self::TrueColor;
         }
 
         // Detect Windows Terminal in Windows and WSL
         if env::var("WT_SESSION").is_ok_and(|s| is_uuid(&s)) {
-            return ColorLevel::TrueColor;
+            return Self::TrueColor;
         }
 
         // Detect CI environments, which typically have limited color support
         if env::var_os("CI").is_some() {
-            return ColorLevel::Ansi256;
+            return Self::Ansi256;
         }
 
         // Windows version-specific checks
@@ -129,24 +129,24 @@ impl ColorLevel {
 
             // Windows 10 build 14931+ supports TrueColor
             if version >= OsVersion::new(10, 0, 0, 14931) {
-                return ColorLevel::TrueColor;
+                return Self::TrueColor;
             }
 
             // Windows 10 build 10586+ supports 256 colors
             if version >= OsVersion::new(10, 0, 0, 10586) {
-                return ColorLevel::Ansi256;
+                return Self::Ansi256;
             }
         }
 
         // Check TERM for 256-color indication
         if let Some(term) = env::var_os("TERM").and_then(|term| term.into_string().ok()) {
             if term.ends_with("-256color") || term.ends_with("256") {
-                return ColorLevel::Ansi256;
+                return Self::Ansi256;
             }
         }
 
         // Fallback to basic ANSI colors
-        ColorLevel::Ansi16
+        Self::Ansi16
     }
 }
 
@@ -176,23 +176,24 @@ impl ShouldColorize {
     /// 2. `NO_COLOR` (force disable colorization)
     /// 3. `CLICOLOR` (enable colorization if set, depending on tty)
     /// 4. If none of the above, use the terminal status (enabled if stdout is a tty)
+    #[must_use]
     pub fn from_env() -> Self {
-        if env::var("CLICOLOR_FORCE").map_or(false, |v| v != "0") {
-            return ShouldColorize::Yes;
+        if env::var("CLICOLOR_FORCE").is_ok_and(|v| v != "0") {
+            return Self::Yes;
         }
 
         if env::var("NO_COLOR").is_ok() {
-            return ShouldColorize::No;
+            return Self::No;
         }
 
-        if env::var("CLICOLOR").map_or(false, |v| v != "0") {
-            return ShouldColorize::Yes;
+        if env::var("CLICOLOR").is_ok_and(|v| v != "0") {
+            return Self::Yes;
         }
 
         if io::stdout().is_terminal() {
-            ShouldColorize::Yes
+            Self::Yes
         } else {
-            ShouldColorize::No
+            Self::No
         }
     }
 }
@@ -201,7 +202,6 @@ impl From<u8> for ShouldColorize {
     fn from(value: u8) -> Self {
         match value {
             0 => Self::No,
-            1 => Self::Yes,
             2 => Self::YesWithAnsi16,
             3 => Self::YesWithAnsi256,
             4 => Self::YesWithTrueColor,
@@ -234,7 +234,7 @@ fn is_uuid(s: &str) -> bool {
             .chain(&bytes[14..18])
             .chain(&bytes[19..23])
             .chain(&bytes[24..36])
-            .all(|b| b.is_ascii_hexdigit())
+            .all(u8::is_ascii_hexdigit)
 }
 
 #[cfg(test)]

@@ -21,6 +21,8 @@ const ANSI_16_COLORS: [(u8, u8, u8, Color); 16] = [
     (255, 255, 255, Color::BrightWhite),
 ];
 
+const CUBE_VALUES: [u8; 6] = [0, 0x5f, 0x87, 0xaf, 0xd7, 0xff];
+
 /// The 8 standard colors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[allow(missing_docs)]
@@ -66,7 +68,7 @@ impl Color {
             Self::BrightMagenta => "95".into(),
             Self::BrightCyan => "96".into(),
             Self::BrightWhite => "97".into(),
-            Self::Ansi256 { idx } => format!("38;5;{}", idx).into(),
+            Self::Ansi256 { idx } => format!("38;5;{idx}").into(),
             Self::TrueColor { r, g, b } => match get_current_color_level() {
                 ColorLevel::Ansi16 => self.truecolor_fallback_to_ansi16().to_fg_str(),
                 ColorLevel::Ansi256 => self.truecolor_fallback_to_ansi256().to_fg_str(),
@@ -97,7 +99,7 @@ impl Color {
             Self::Ansi256 { idx } => match get_current_color_level() {
                 ColorLevel::Ansi16 => self.ansi256_fallback_to_ansi16().to_bg_str(),
                 ColorLevel::Ansi256 | ColorLevel::TrueColor | ColorLevel::None => {
-                    format!("48;5;{}", idx).into()
+                    format!("48;5;{idx}").into()
                 }
             },
             Self::TrueColor { r, g, b } => match get_current_color_level() {
@@ -109,18 +111,19 @@ impl Color {
     }
 
     /// Converts an ANSI 256-color to the closest ANSI 16-color palette color.
+    #[must_use]
     pub fn ansi256_fallback_to_ansi16(self) -> Self {
         match self {
-            Color::Ansi256 { idx } => {
+            Self::Ansi256 { idx } => {
                 let (r, g, b) = ansi256_to_rgb(idx);
                 let mut min_distance_sq = u32::MAX;
                 let mut closest_color = self;
 
-                for &(cr, cg, cb, color) in ANSI_16_COLORS.iter() {
-                    let dr = (r as i32 - cr as i32).pow(2);
-                    let dg = (g as i32 - cg as i32).pow(2);
-                    let db = (b as i32 - cb as i32).pow(2);
-                    let distance_sq = (dr + dg + db) as u32;
+                for &(cr, cg, cb, color) in &ANSI_16_COLORS {
+                    let dr = (i32::from(r) - i32::from(cr)).pow(2) as u32;
+                    let dg = (i32::from(g) - i32::from(cg)).pow(2) as u32;
+                    let db = (i32::from(b) - i32::from(cb)).pow(2) as u32;
+                    let distance_sq = dr + dg + db;
 
                     if distance_sq < min_distance_sq {
                         min_distance_sq = distance_sq;
@@ -134,18 +137,19 @@ impl Color {
         }
     }
 
-    /// Converts a TrueColor to the closest ANSI 16-color palette color.
+    /// Converts a `TrueColor` to the closest ANSI 16-color palette color.
+    #[must_use]
     pub fn truecolor_fallback_to_ansi16(self) -> Self {
         match self {
-            Color::TrueColor { r, g, b } => {
+            Self::TrueColor { r, g, b } => {
                 let mut min_distance_sq = u32::MAX;
                 let mut closest_color = self;
 
-                for &(cr, cg, cb, color) in ANSI_16_COLORS.iter() {
-                    let dr = (r as i32 - cr as i32).pow(2);
-                    let dg = (g as i32 - cg as i32).pow(2);
-                    let db = (b as i32 - cb as i32).pow(2);
-                    let distance_sq = (dr + dg + db) as u32;
+                for &(cr, cg, cb, color) in &ANSI_16_COLORS {
+                    let dr = (i32::from(r) - i32::from(cr)).pow(2) as u32;
+                    let dg = (i32::from(g) - i32::from(cg)).pow(2) as u32;
+                    let db = (i32::from(b) - i32::from(cb)).pow(2) as u32;
+                    let distance_sq = dr + dg + db;
 
                     if distance_sq < min_distance_sq {
                         min_distance_sq = distance_sq;
@@ -159,19 +163,20 @@ impl Color {
         }
     }
 
-    /// Converts a TrueColor to the closest ANSI 256-color palette color.
+    /// Converts a `TrueColor` to the closest ANSI 256-color palette color.
+    #[must_use]
     pub fn truecolor_fallback_to_ansi256(self) -> Self {
         match self {
-            Color::TrueColor { r, g, b } => {
+            Self::TrueColor { r, g, b } => {
                 let mut min_distance_sq = u32::MAX;
                 let mut closest_idx = 0;
 
                 for idx in 0u8..=255 {
                     let (cr, cg, cb) = ansi256_to_rgb(idx);
-                    let dr = (r as i32 - cr as i32).pow(2);
-                    let dg = (g as i32 - cg as i32).pow(2);
-                    let db = (b as i32 - cb as i32).pow(2);
-                    let distance_sq = (dr + dg + db) as u32;
+                    let dr = (i32::from(r) - i32::from(cr)).pow(2) as u32;
+                    let dg = (i32::from(g) - i32::from(cg)).pow(2) as u32;
+                    let db = (i32::from(b) - i32::from(cb)).pow(2) as u32;
+                    let distance_sq = dr + dg + db;
 
                     if distance_sq < min_distance_sq {
                         min_distance_sq = distance_sq;
@@ -179,7 +184,7 @@ impl Color {
                     }
                 }
 
-                Color::Ansi256 { idx: closest_idx }
+                Self::Ansi256 { idx: closest_idx }
             }
             _ => self,
         }
@@ -236,7 +241,6 @@ fn ansi256_to_rgb(idx: u8) -> (u8, u8, u8) {
         let rem = idx % 36;
         let g = rem / 6;
         let b = rem % 6;
-        const CUBE_VALUES: [u8; 6] = [0, 0x5f, 0x87, 0xaf, 0xd7, 0xff];
         let r_val = CUBE_VALUES[r as usize];
         let g_val = CUBE_VALUES[g as usize];
         let b_val = CUBE_VALUES[b as usize];
