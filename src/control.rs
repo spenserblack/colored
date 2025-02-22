@@ -63,11 +63,23 @@ pub fn set_virtual_terminal(use_virtual: bool) -> Result<(), ()> {
 
 /// A flag for whether coloring should occur.
 pub struct ShouldColorize {
-    clicolor: bool,
-    clicolor_force: Option<bool>,
+    clicolor: ColorLevel,
+    clicolor_force: Option<ColorLevel>,
     // XXX we can't use Option<Atomic> because we can't use &mut references to ShouldColorize
     has_manual_override: AtomicBool,
     manual_override: AtomicBool,
+}
+
+/// The level of color supported by the terminal.
+enum ColorLevel {
+    /// Full color support (AKA true color).
+    Full,
+    /// 256 color support.
+    Ansi256,
+    /// 16 color support.
+    Ansi16,
+    /// No color support.
+    None,
 }
 
 /// Use this to force colored to ignore the environment and always/never colorize
@@ -88,7 +100,7 @@ pub static SHOULD_COLORIZE: LazyLock<ShouldColorize> = LazyLock::new(ShouldColor
 impl Default for ShouldColorize {
     fn default() -> Self {
         Self {
-            clicolor: true,
+            clicolor: ColorLevel::Full,
             clicolor_force: None,
             has_manual_override: AtomicBool::new(false),
             manual_override: AtomicBool::new(false),
