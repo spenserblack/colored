@@ -1,7 +1,7 @@
 use std::{borrow::Cow, cmp, env, str::FromStr};
 use Color::{
-    Black, Blue, BrightBlack, BrightBlue, BrightCyan, BrightGreen, BrightMagenta, BrightRed,
-    BrightWhite, BrightYellow, Cyan, Green, Magenta, Red, TrueColor, White, Yellow,
+    AnsiColor, Black, Blue, BrightBlack, BrightBlue, BrightCyan, BrightGreen, BrightMagenta,
+    BrightRed, BrightWhite, BrightYellow, Cyan, Green, Magenta, Red, TrueColor, White, Yellow,
 };
 /// The 8 standard colors.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -23,6 +23,7 @@ pub enum Color {
     BrightMagenta,
     BrightCyan,
     BrightWhite,
+    AnsiColor(u8),
     TrueColor { r: u8, g: u8, b: u8 },
 }
 
@@ -55,6 +56,7 @@ impl Color {
             Self::TrueColor { .. } if !truecolor_support() => {
                 self.closest_color_euclidean().to_fg_str()
             }
+            Self::AnsiColor(code) => format!("38;5;{code}").into(),
             Self::TrueColor { r, g, b } => format!("38;2;{r};{g};{b}").into(),
         }
     }
@@ -78,6 +80,7 @@ impl Color {
             Self::BrightMagenta => "105".into(),
             Self::BrightCyan => "106".into(),
             Self::BrightWhite => "107".into(),
+            Self::AnsiColor(code) => format!("48;5;{code}").into(),
             Self::TrueColor { .. } if !truecolor_support() => {
                 self.closest_color_euclidean().to_bg_str()
             }
@@ -191,6 +194,7 @@ impl Color {
                 g: 255,
                 b: 255,
             },
+            AnsiColor(color) => AnsiColor(color),
             TrueColor { r, g, b } => TrueColor { r, g, b },
         }
     }
